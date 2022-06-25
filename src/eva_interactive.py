@@ -16,7 +16,6 @@ from fp16 import FP16_Module
 
 from utils import print_rank_0, initialize_distributed, set_random_seed
 from generation_utils import generate_beam, generate_no_beam
-
 from model import DistributedDataParallel as DDP
 
 
@@ -213,8 +212,10 @@ def generate_samples(model, tokenizer: EVATokenizer, args, device):
                 print("Sys >>> {}".format(generation_str_list[0]))
 
 
-def main():
-    """Main serving program."""
+def init():
+    global model
+    global tokenizer
+    global args
 
     print('Loading Model ...')
 
@@ -231,11 +232,16 @@ def main():
     set_random_seed(args.seed)
 
     #get the tokenizer
+    print(args)
     tokenizer = EVATokenizer(os.path.join(args.tokenizer_path, 'vocab.txt'))
 
     # Model, optimizer, and learning rate.
     model = setup_model(args, tokenizer.vocab_size)
+    model.eval()
 
+
+def main():
+    """Main serving program."""
     #setting default batch size to 1
     args.batch_size = 1
     # os.system('clear')
@@ -243,6 +249,8 @@ def main():
     #generate samples
     generate_samples(model, tokenizer, args, torch.cuda.current_device())
     
+
+init() # init the model when imported or run directly
 
 if __name__ == "__main__":
     main()
